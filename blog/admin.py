@@ -1,7 +1,11 @@
 from django.contrib import admin
-from blog.models import Post, Tag, Comment
+from .models import Post, Tag, Comment
 
 
-admin.site.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    raw_id_fields = ['author']
+
+
+admin.site.register(Post,PostAdmin)
 admin.site.register(Tag)
 admin.site.register(Comment)

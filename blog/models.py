@@ -10,14 +10,16 @@ class PostQuerySet(models.QuerySet):
         return most_popular_posts
 
     def fetch_with_comments_count(self):
-        posts_ids = [post.id for post in self.all()]
+        most_popular_posts = self.all()
+        posts_ids = [post.id for post in most_popular_posts]
         posts_with_comments = Post.objects.filter(id__in=posts_ids).annotate(
             comments_count=Count('comments'))
         ids_and_comments = posts_with_comments.values_list('id', 'comments_count')
         count_for_id = dict(ids_and_comments)
-        for post in posts_with_comments:
+        for post in most_popular_posts:
             post.comments_count = count_for_id[post.id]
-        return posts_with_comments
+        return most_popular_posts
+
 
 class Post(models.Model):
     title = models.CharField("Заголовок", max_length=200)
@@ -26,7 +28,8 @@ class Post(models.Model):
     image = models.ImageField("Картинка")
     published_at = models.DateTimeField("Дата и время публикации")
 
-    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор", limit_choices_to={'is_staff': True})
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор",
+                               limit_choices_to={'is_staff': True})
     likes = models.ManyToManyField(User, related_name="liked_posts", verbose_name="Кто лайкнул", blank=True)
     tags = models.ManyToManyField("Tag", related_name="posts", verbose_name="Теги")
 
@@ -42,6 +45,7 @@ class Post(models.Model):
         ordering = ['-published_at']
         verbose_name = 'пост'
         verbose_name_plural = 'посты'
+
 
 class TagQuerySet(models.QuerySet):
     def popular(self):
@@ -69,7 +73,8 @@ class Tag(models.Model):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey("Post", on_delete=models.CASCADE, verbose_name="Пост, к которому написан", related_name='comments')
+    post = models.ForeignKey("Post", on_delete=models.CASCADE, verbose_name="Пост, к которому написан",
+                             related_name='comments')
     author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор")
 
     text = models.TextField("Текст комментария")
